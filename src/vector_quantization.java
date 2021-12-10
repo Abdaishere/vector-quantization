@@ -63,7 +63,12 @@ public class vector_quantization {
         for (int i = 0; i < vectors.size(); i++) {
             data += lables[findcoodbookofID(i)];
         }
-        String comData = new String();
+        String header = new String();
+        header += fileProcessor.toBin(img.w * img.h * fileProcessor.log2(codex.size()) % 8, 16);
+        header += fileProcessor.toBin(img.w, 16);
+        header += fileProcessor.toBin(img.h, 16);
+        header += fileProcessor.toBin(codex.size(), 16);
+        header += fileProcessor.toBin(vectorSize, 16);
         String coodbook = new String();
         for (float[][] code : codex) {
             for (int i = 0; i < vectorSize; i++) {
