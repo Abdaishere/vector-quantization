@@ -37,7 +37,6 @@ public class fileProcessor {
             if (c < 0) c = c & 0xFF;
             res += (char) c;
         }
-//        System.out.println(res);
         return res;
     }
 
