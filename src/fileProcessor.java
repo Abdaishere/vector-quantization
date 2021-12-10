@@ -20,7 +20,6 @@ public class fileProcessor {
     }
 
     protected static String binaryStringToBits(String s, int extraLen) {
-
         //complete the string to multiple of 8
         for (int i = 0; i < extraLen; i++)
             s += '0';

@@ -8,6 +8,8 @@ public class vector_quantization {
     image img;
     ArrayList<float[][]> codex;
     ArrayList<Integer>[] IDs;
+    int codexsize;
+    ArrayList<Integer> parent;
     static int i;
 
 
@@ -76,29 +78,67 @@ public class vector_quantization {
                 }
             }
         }
-        fileProcessor.writeToFile(fileProcessor.binaryStringToBits(header + coodbook + data, 0), dest);
+//        System.out.println((header).length() + " " + coodbook.length() + " " + data.length());
+        data = header + coodbook + data;
+        int extraLen = 8 - (data.length() % 8);
+        if (extraLen == 8)
+            extraLen = 0;
+
+        data = fileProcessor.binaryStringToBits(data, extraLen);
+        data = String.valueOf((byte) extraLen) + data;
+        fileProcessor.writeToFile(data, dest);
     }
 
     private void decode(String source) {
+
         img = new image();
         String fileData = fileProcessor.fileToString(source);
-        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-        fileData = fileData.substring(2);
-        System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-        fileData = fileData.substring(2);
-        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-        fileData = fileData.substring(2);
-        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        int extralen;
+        System.out.println(extralen = Integer.parseInt(fileData.substring(0, 1)));
+        fileData = fileData.substring(1);
+
+        System.out.println("w = " + (img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2)));
         fileData = fileData.substring(2);
 
+        System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+
+        System.out.println(codexsize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+
+        System.out.println(vectorSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+
+        codex = new ArrayList<>();
+        for (int codes = 0; codes < codexsize; codes++) {
+            float[][] tmp = new float[vectorSize][vectorSize];
+            for (int i = 0; i < vectorSize; i++) {
+                for (int j = 0; j < vectorSize; j++) {
+                    tmp[i][j] = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 1), 0), 2);
+                    fileData = fileData.substring(1);
+                }
+            }
+            codex.add(tmp);
+        }
+//        vectors_to_images(codex, "decoded");
+        parent = new ArrayList<>();
+        int size = fileProcessor.log2(codexsize);
+        fileData = fileProcessor.bitsToBinaryString(fileData, extralen);
+//        System.out.println(fileData);
+        while (fileData.length() > 0) {
+            parent.add(Integer.parseInt(fileData.substring(0, size), 2));
+            fileData = fileData.substring(size);
+        }
+        System.out.println(parent.size());
     }
 
     public void decompress(String source, String dest) {
         decode(source);
         int w = 0;
+        img.pixels = new float[img.w][img.h];
         for (int i = 0; i < img.w; i += vectorSize) {
             for (int j = 0; j < img.h; j += vectorSize) {
-                float[][] tmp = codex.get(findcoodbookofID(w));
+                float[][] tmp = codex.get(parent.get(w));
                 int Row = 0;
                 for (int k = i; k < i + vectorSize; k++) {
                     int col = 0;
