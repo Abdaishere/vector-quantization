@@ -13,8 +13,9 @@ public class Main {
 //        String dest = input.nextLine();
 //        new vector_quantization().compress(vectorSize, bookSize, new image(source), dest);
 //        System.out.println(new image("download.jpg").toString());
-        vector_quantization vecq = new vector_quantization(4, 32, new image("download.jpg"));
-        vecq.compress("out.png");
+        vector_quantization vecq = new vector_quantization(5, 32);
+        vecq.compress("downlaod.png", ".\\tesst.txt");
+        vecq.decompress(".\\tesst.txt", "something.png");
 //        Image.toimage("out.png");
     }
 }

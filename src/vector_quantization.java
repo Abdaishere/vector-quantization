@@ -1,42 +1,128 @@
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class vector_quantization {
-    ArrayList<int[][]> vectors;
+    ArrayList<float[][]> vectors;
     int vectorSize;
     int bookSize;
     image img;
+    ArrayList<float[][]> codex;
+    ArrayList<Integer>[] IDs;
+    static int i;
 
-    public vector_quantization(int vectorSize, int bookSize, image img) {
+
+    public vector_quantization(int vectorSize, int bookSize) {
         this.vectorSize = vectorSize;
         this.bookSize = bookSize;
-        this.img = img;
-        vectors = new ArrayList<int[][]>();
+    }
+
+    public void compress(String source, String dest) {
+        this.img = new image(source);
+        vectors = new ArrayList<>();
         //split image to vectors
         for (int i = 0; i < img.w; i += vectorSize) {
             for (int j = 0; j < img.h; j += vectorSize) {
-                int[][] tmp = new int[vectorSize][vectorSize];
+                float[][] tmp = new float[vectorSize][vectorSize];
                 int Row = 0;
                 for (int k = i; k < i + vectorSize; k++) {
                     int col = 0;
                     for (int l = j; l < j + vectorSize; l++) {
-                        if (k >= img.h || l >= img.w) {
-                            tmp[Row][col++] = 0;
-                            continue;
+                        try {
+                            tmp[Row][col++] = img.pixels[k][l];
+                        } catch (Exception e) {
                         }
-                        tmp[Row][col++] = img.pixels[k][l];
                     }
                     Row++;
                 }
                 vectors.add(tmp);
             }
         }
+        splitting();
+        encode(dest);
+    }
+
+    public void vectors_to_images(ArrayList<float[][]> vector, String str) {
+        image tmp = new image();
+        i = 0;
+        for (float[][] vec : vector) {
+            tmp.pixels = vec;
+            tmp.toimage(".\\test\\" + str + "_%s.png".formatted(i++));
+        }
+    }
+
+    public void vector_replace(float[][] vec, image img, int i) {
+        vectors.set(i, vec);
+    }
+
+    public void encode(String dest) {
+        String data = new String();
+        String[] lables = new String[codex.size()];
+        for (int i = 0; i < codex.size(); i++) {
+            lables[i] = fileProcessor.toBin(i, fileProcessor.log2(codex.size()));
+        }
+        for (int i = 0; i < vectors.size(); i++) {
+            data += lables[findcoodbookofID(i)];
+        }
+        String header = new String();
+        header += fileProcessor.toBin(img.w, 16);
+        header += fileProcessor.toBin(img.h, 16);
+        header += fileProcessor.toBin(codex.size(), 16);
+        header += fileProcessor.toBin(vectorSize, 16);
+        String coodbook = new String();
+        for (float[][] code : codex) {
+            for (int i = 0; i < vectorSize; i++) {
+                for (int j = 0; j < vectorSize; j++) {
+                    coodbook += fileProcessor.toBin((int) code[i][j], 8);
+                }
+            }
+        }
+        fileProcessor.writeToFile(fileProcessor.binaryStringToBits(header + coodbook + data, 0), dest);
+    }
+
+    private void decode(String source) {
+        img = new image();
+        String fileData = fileProcessor.fileToString(source);
+        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+        System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
+        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        fileData = fileData.substring(2);
 
     }
 
-    public void compress(String dest) {
-        splitting();
+    public void decompress(String source, String dest) {
+        decode(source);
+        int w = 0;
+        for (int i = 0; i < img.w; i += vectorSize) {
+            for (int j = 0; j < img.h; j += vectorSize) {
+                float[][] tmp = codex.get(findcoodbookofID(w));
+                int Row = 0;
+                for (int k = i; k < i + vectorSize; k++) {
+                    int col = 0;
+                    for (int l = j; l < j + vectorSize; l++) {
+                        try {
+                            img.pixels[k][l] = tmp[Row][col++];
+                        } catch (Exception e) {
+                        }
+                    }
+                    Row++;
+                }
+                w++;
+            }
+        }
+        img.toimage(dest);
+    }
 
-
+    public int findcoodbookofID(int ID) {
+        for (int node = 0; node < codex.size(); node++) {
+            if (IDs[node] != null && IDs[node].contains(ID)) {
+                return node;
+            }
+        }
+        return -1;
     }
 
     public void splitting() {
@@ -44,64 +130,69 @@ public class vector_quantization {
         float[][] averageVec = new float[vectorSize][vectorSize];           //Average
         averageVec = getAverageOfVectors(vectors);
 
-        ArrayList<float[][]> nodes = new ArrayList<>();
-        ArrayList<Integer>[] IDs = new ArrayList[bookSize];
-        nodes.add(averageVec);
-
-        while (nodes.size() < bookSize) {
-            ArrayList<float[][]> tmpnodes = new ArrayList<>();
-            for (float[][] vec : nodes) {       // split
-                tmpnodes.add(addToVector(vec, 1));
-                tmpnodes.add(addToVector(vec, -1));
+        codex = new ArrayList<>();
+        IDs = new ArrayList[bookSize];
+        codex.add(averageVec);
+        while (codex.size() < bookSize) {
+            int size = codex.size();
+            for (int i = 0; i < size; i++) {
+                float[][] tmp = addToVector(codex.remove(0), 0);
+                codex.add(tmp);
+                codex.add(addToVector(tmp, 1));
             }
-            nodes = tmpnodes;
-            ArrayList<Integer>[] tmpIds = new ArrayList[bookSize];
-
-            for (int i = 0; i < vectors.size(); i++) {                  // Association
-                ArrayList<Integer> meanErrors = new ArrayList<Integer>();
-                for (float[][] vec : nodes) {
-                    meanErrors.add(MSE(vectors.get(i), vec));
+            size = vectors.size();
+            ArrayList<Integer>[] tmpIDs = new ArrayList[codex.size()];
+            for (int i = 0; i < size; i++) {
+                ArrayList<Integer> MESs = new ArrayList<>();
+                for (float[][] code : codex) {
+                    MESs.add(MSE(code, vectors.get(i)));
                 }
-                int[] tmp = new int[2];
-                for (int f = 0; f < meanErrors.size(); f++) {
-                    if (meanErrors.get(f) < tmp[0]) {
-                        tmp[0] = meanErrors.get(f);
-                        tmp[1] = f;
-                    }
-                }
-                if (tmpIds[tmp[1]] == null) {
-                    tmpIds[tmp[1]] = new ArrayList<Integer>();
-                }
-                tmpIds[tmp[1]].add(i);
+                int possion = getindexofmin(MESs);
+                if (tmpIDs[possion] == null)
+                    tmpIDs[possion] = new ArrayList<Integer>();
+                tmpIDs[possion].add(i);
             }
-            IDs = tmpIds;
-
-            // Avrage nodes
-            for (int i = 0; i < nodes.size(); i++) {
-                if (IDs[i] == null)
-                    break;
-                nodes.set(i, AvgbyID(IDs[i]));
+            size = codex.size();
+            for (int i = 0; i < size; i++) {
+                if (tmpIDs[i] == null) {
+                    continue;
+                } else
+                    codex.set(i, AvgbyID(tmpIDs[i]));
             }
+            IDs = tmpIDs;
         }
-
-        for (float[][] vec : nodes) {
-            printAVector(vec);
-            System.out.println(" ");
+        int size = vectors.size();
+        ArrayList<Integer>[] tmpIDs = new ArrayList[codex.size()];
+        for (int i = 0; i < size; i++) {
+            ArrayList<Integer> MESs = new ArrayList<>();
+            for (float[][] code : codex) {
+                MESs.add(MSE(code, vectors.get(i)));
+            }
+            int possion = getindexofmin(MESs);
+            if (tmpIDs[possion] == null)
+                tmpIDs[possion] = new ArrayList<Integer>();
+            tmpIDs[possion].add(i);
         }
+        IDs = tmpIDs;
+        vectors_to_images(codex, "codebook number ");
     }
 
+    public int getindexofmin(ArrayList<Integer> a) {
+        return a.indexOf(Collections.min(a));
+    }
 
     public float[][] AvgbyID(ArrayList<Integer> a) {
-        ArrayList<int[][]> vector = new ArrayList<>();
+        ArrayList<float[][]> vector = new ArrayList<>();
         for (Integer ID : a) {
             vector.add(vectors.get(ID));
         }
+//        vectors_to_images(vector, str);
         return getAverageOfVectors(vector);
     }
 
-    public float[][] getAverageOfVectors(ArrayList<int[][]> vecto) {
+    public float[][] getAverageOfVectors(ArrayList<float[][]> vecto) {
         float[][] averageVec = new float[vectorSize][vectorSize];
-        for (int[][] vec : vecto) {
+        for (float[][] vec : vecto) {
             for (int i = 0; i < vectorSize; i++) {
                 for (int j = 0; j < vectorSize; j++) {
                     averageVec[i][j] += vec[i][j];
@@ -110,7 +201,7 @@ public class vector_quantization {
         }
         for (int i = 0; i < vectorSize; i++) {
             for (int j = 0; j < vectorSize; j++) {
-                averageVec[i][j] /= vectors.size();
+                averageVec[i][j] /= vecto.size();
             }
         }
         return averageVec;
@@ -125,30 +216,31 @@ public class vector_quantization {
         }
     }
 
-    public static int log2(int x) {
-        return (int) Math.ceil(Math.log(x) / Math.log(2));
-    }
 
     public float[][] addToVector(float[][] vec, int val) {
         float[][] temp = new float[vectorSize][vectorSize];
         for (int i = 0; i < vectorSize; i++) {
             for (int j = 0; j < vectorSize; j++) {
-                temp[i][j] = (int) Math.floor(vec[i][j] + val);
+                int tmp = (int) Math.floor(vec[i][j] + val);
+                if (tmp < 0)
+                    temp[i][j] = 0;
+                else if (tmp > 255)
+                    temp[i][j] = 255;
+                else
+                    temp[i][j] = tmp;
             }
-            System.out.print("\n");
         }
         return temp;
     }
 
-    public int MSE(int[][] vec1, float[][] vec2) {
+    public int MSE(float[][] vec1, float[][] vec2) {
         int result = 0;
 
         for (int i = 0; i < vectorSize; i++) {
             for (int j = 0; j < vectorSize; j++) {
-                result += (vec1[i][j] - vec2[i][j]) * (vec1[i][j] - vec2[i][j]);
+                result += Math.abs(vec1[i][j] - vec2[i][j]);
             }
         }
-
         return result;
     }
 }

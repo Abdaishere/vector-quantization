@@ -8,8 +8,12 @@ import java.io.IOException;
 public class image {
     String directory;
     BufferedImage img;
-    int[][] pixels;
+    float[][] pixels;
     int w, h;
+
+    public image() {
+
+    }
 
     public image(String str) {
         try {
@@ -20,8 +24,7 @@ public class image {
         }
         w = img.getWidth();
         h = img.getHeight();
-        pixels = new int[w][h];
-        // make less gay
+        pixels = new float[w][h];
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 // must be png
@@ -32,7 +35,6 @@ public class image {
 
             }
         }
-        toimage("out.png");
     }
 
     @Override
@@ -53,7 +55,7 @@ public class image {
                 pixels.length, pixels[0].length, BufferedImage.TYPE_BYTE_GRAY);
         for (int x = 0; x < pixels.length; x++) {
             for (int y = 0; y < pixels[x].length; y++) {
-                img.setRGB(x, y, new Color(pixels[x][y], pixels[x][y], pixels[x][y]).getRGB());
+                img.setRGB(x, y, new Color((int) pixels[x][y], (int) pixels[x][y], (int) pixels[x][y]).getRGB());
             }
         }
         File imageFile = new File(s);
