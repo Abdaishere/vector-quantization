@@ -77,50 +77,23 @@ public class vector_quantization {
                 }
             }
         }
-        comData += coodbook + data;
-        int extraLen = 8 - (comData.length() % 8);
-        if (extraLen == 8)
-            extraLen = 0;
-
-        comData = fileProcessor.binaryStringToBits(comData, extraLen);
-        comData = fileProcessor.toBin(img.w, 16) + comData;
-        comData = fileProcessor.toBin(img.h, 16) + comData;
-        comData = fileProcessor.toBin(codex.size(), 16) + comData;
-        comData = fileProcessor.toBin(vectorSize, 16) + comData;
-
-        fileProcessor.writeToFile((byte) extraLen + fileProcessor.binaryStringToBits(comData, extraLen), dest);
+        fileProcessor.writeToFile(fileProcessor.binaryStringToBits(header + coodbook + data, 0), dest);
     }
 
     private void decode(String source) {
         img = new image();
         String fileData = fileProcessor.fileToString(source);
-//        int extralen = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2);
-//        fileData = fileData.substring(2);
-//        System.out.println(extralen);
-//        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-//        fileData = fileData.substring(2);
-//        System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-//        fileData = fileData.substring(2);
-//        System.out.println(bookSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-//        fileData = fileData.substring(2);
-//        System.out.println(vectorSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
-//        fileData = fileData.substring(2);
-        int extralen = Integer.parseInt(fileData.substring(0, 1), 2);
+        int extralen = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2);
+        fileData = fileData.substring(2);
         System.out.println(extralen);
-        fileData = fileData.substring(1);
-
-        vectorSize = Integer.parseInt(fileData.substring(0, 2), 2);
+        System.out.println(img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
         fileData = fileData.substring(2);
-
-        int codexsize = Integer.parseInt(fileData.substring(0, 2),  2);
+        System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
         fileData = fileData.substring(2);
-
-        img.h = Integer.parseInt(fileData.substring(0, 2), 2);
+        System.out.println(bookSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
         fileData = fileData.substring(2);
-
-        img.w = Integer.parseInt(fileData.substring(0, 2), 2);
+        System.out.println(vectorSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
         fileData = fileData.substring(2);
-
         codex = new ArrayList<float[][]>();
         for (int q = 0; q < bookSize; q++) {
             float[][] tmp = new float[vectorSize][vectorSize];
@@ -134,22 +107,19 @@ public class vector_quantization {
         }
         vectors_to_images(codex, ".\\encoded");
         int size = fileProcessor.log2(bookSize);
-        System.out.println(size);
         parent = new ArrayList<>();
         fileData = fileProcessor.bitsToBinaryString(fileData, 0);
-        System.out.println(fileData.length() / size);
-        while (fileData != "") {
+        while (fileData.length() >= size) {
             System.out.println(fileData);
             parent.add(Integer.parseInt(fileData.substring(0, size), 2));
             fileData = fileData.substring(size);
         }
-//        parent.add(Integer.parseInt(fileData, 2));
         System.out.println(parent.size());
     }
 
     public void decompress(String source, String dest) {
         decode(source);
-        img.pixels = new float[img.w][img.h];
+        img.pixels =new float[img.w][img.h];
         int w = 0;
         for (int i = 0; i < img.w; i += vectorSize) {
             for (int j = 0; j < img.h; j += vectorSize) {
