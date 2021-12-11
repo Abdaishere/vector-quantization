@@ -124,11 +124,12 @@ public class vector_quantization {
         parent = new ArrayList<>();
         int size = fileProcessor.log2(codexsize);
         fileData = fileProcessor.bitsToBinaryString(fileData, extralen);
-//        System.out.println(fileData);
-        while (fileData.length() > 0) {
+        System.out.println(fileData.length());
+        while (fileData.length() >= size) {
             parent.add(Integer.parseInt(fileData.substring(0, size), 2));
             fileData = fileData.substring(size);
         }
+//        parent.add(Integer.parseInt(fileData, 2));
         System.out.println(parent.size());
     }
 
@@ -138,7 +139,14 @@ public class vector_quantization {
         img.pixels = new float[img.w][img.h];
         for (int i = 0; i < img.w; i += vectorSize) {
             for (int j = 0; j < img.h; j += vectorSize) {
-                float[][] tmp = codex.get(parent.get(w));
+                float[][] tmp;
+                try {
+                tmp = codex.get(parent.get(w));
+                }catch (Exception e){
+                    System.out.println("not found " + e.getMessage());
+                    w++;
+                    continue;
+                }
                 int Row = 0;
                 for (int k = i; k < i + vectorSize; k++) {
                     int col = 0;
@@ -214,7 +222,7 @@ public class vector_quantization {
             tmpIDs[possion].add(i);
         }
         IDs = tmpIDs;
-        vectors_to_images(codex, "codebook number ");
+//        vectors_to_images(codex, "codebook number ");
     }
 
     public int getindexofmin(ArrayList<Integer> a) {

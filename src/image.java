@@ -27,12 +27,11 @@ public class image {
         pixels = new float[w][h];
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                // must be png
-                String tmp = String.format("%08X", img.getRGB(i, j));
-                pixels[i][j] = (int) (Integer.parseInt(tmp.substring(2, 4), 16) * 0.299 +
-                        Integer.parseInt(tmp.substring(4, 6), 16) * 0.587 +
-                        Integer.parseInt(tmp.substring(6, 8), 16) * 0.114);
-
+                Color c = new Color(img.getRGB(i, j));
+                int red = (int) (c.getRed() * 0.299);
+                int green = (int) (c.getGreen() * 0.587);
+                int blue = (int) (c.getBlue() * 0.114);
+                pixels[i][j] = red + green + blue;
             }
         }
     }
