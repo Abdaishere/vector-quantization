@@ -141,8 +141,8 @@ public class vector_quantization {
             for (int j = 0; j < img.h; j += vectorSize) {
                 float[][] tmp;
                 try {
-                tmp = codex.get(parent.get(w));
-                }catch (Exception e){
+                    tmp = codex.get(parent.get(w));
+                } catch (Exception e) {
                     System.out.println("not found " + e.getMessage());
                     w++;
                     continue;
@@ -200,12 +200,18 @@ public class vector_quantization {
                     tmpIDs[possion] = new ArrayList<Integer>();
                 tmpIDs[possion].add(i);
             }
-            size = codex.size();
-            for (int i = 0; i < size; i++) {
+            codex.size();
+            for (int i = 0; i < codex.size(); i++) {
                 if (tmpIDs[i] == null) {
+//                    codex.remove(i--);
+//                    // TO DO remove from tmpIDs
                     continue;
                 } else
                     codex.set(i, AvgbyID(tmpIDs[i]));
+            }
+            boolean same = false;
+            for (int i = 0; i < bookSize; i++) {
+
             }
             IDs = tmpIDs;
         }
@@ -221,7 +227,8 @@ public class vector_quantization {
                 tmpIDs[possion] = new ArrayList<Integer>();
             tmpIDs[possion].add(i);
         }
-        IDs = tmpIDs;
+        for (int i = 0; i < codex.size(); i++)
+            IDs = tmpIDs;
 //        vectors_to_images(codex, "codebook number ");
     }
 
@@ -236,6 +243,19 @@ public class vector_quantization {
         }
 //        vectors_to_images(vector, str);
         return getAverageOfVectors(vector);
+    }
+
+    boolean vectorcomp(float[][] vec1, float[][] vec2) {
+        boolean f = false;
+        for (int i = 0; i < vectorSize; i++) {
+            for (int j = 0; j < vectorSize; j++) {
+                if (vec1[i][j] == vec2[i][j]) {
+                    f = true;
+                    break;
+                }
+            }
+        }
+        return f;
     }
 
     public float[][] getAverageOfVectors(ArrayList<float[][]> vecto) {
