@@ -12,6 +12,7 @@ public class vector_quantization {
     ArrayList<Integer> parent;
     static int i;
 
+    public vector_quantization(){}
 
     public vector_quantization(int vectorSize, int bookSize) {
         this.vectorSize = vectorSize;
@@ -19,6 +20,7 @@ public class vector_quantization {
     }
 
     public void compress(String source, String dest) {
+        System.out.println("Compressing");
         this.img = new image(source);
         vectors = new ArrayList<>();
         //split image to vectors
@@ -39,7 +41,9 @@ public class vector_quantization {
                 vectors.add(tmp);
             }
         }
+        System.out.println("Splitting");
         splitting();
+        System.out.println("Encoding");
         encode(dest);
     }
 
@@ -62,9 +66,11 @@ public class vector_quantization {
         for (int i = 0; i < codex.size(); i++) {
             lables[i] = fileProcessor.toBin(i, fileProcessor.log2(codex.size()));
         }
+
         for (int i = 0; i < vectors.size(); i++) {
             data += lables[findcoodbookofID(i)];
         }
+
         String header = new String();
         header += fileProcessor.toBin(img.w, 16);
         header += fileProcessor.toBin(img.h, 16);
@@ -78,7 +84,7 @@ public class vector_quantization {
                 }
             }
         }
-//        System.out.println((header).length() + " " + coodbook.length() + " " + data.length());
+
         data = header + coodbook + data;
         int extraLen = 8 - (data.length() % 8);
         if (extraLen == 8)
@@ -97,16 +103,16 @@ public class vector_quantization {
         System.out.println(extralen = Integer.parseInt(fileData.substring(0, 1)));
         fileData = fileData.substring(1);
 
-        System.out.println("w = " + (img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2)));
+        System.out.print((img.w = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2)) + " x ");
         fileData = fileData.substring(2);
 
         System.out.println(img.h = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
         fileData = fileData.substring(2);
 
-        System.out.println(codexsize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        System.out.println("codebook Size =" + (codexsize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2)));
         fileData = fileData.substring(2);
 
-        System.out.println(vectorSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2));
+        System.out.println("vector Size =" + (vectorSize = Integer.parseInt(fileProcessor.bitsToBinaryString(fileData.substring(0, 2), 0), 2)));
         fileData = fileData.substring(2);
 
         codex = new ArrayList<>();
@@ -120,22 +126,22 @@ public class vector_quantization {
             }
             codex.add(tmp);
         }
-//        vectors_to_images(codex, "decoded");
         parent = new ArrayList<>();
         int size = fileProcessor.log2(codexsize);
         fileData = fileProcessor.bitsToBinaryString(fileData, extralen);
-        System.out.println(fileData.length());
         while (fileData.length() >= size) {
             parent.add(Integer.parseInt(fileData.substring(0, size), 2));
             fileData = fileData.substring(size);
         }
-//        parent.add(Integer.parseInt(fileData, 2));
-        System.out.println(parent.size());
+        System.out.println("number of a labels =" + parent.size());
     }
 
     public void decompress(String source, String dest) {
+        System.out.println("Decompressing");
+        System.out.println("Decoding");
         decode(source);
         int w = 0;
+        System.out.println("Building Image");
         img.pixels = new float[img.w][img.h];
         for (int i = 0; i < img.w; i += vectorSize) {
             for (int j = 0; j < img.h; j += vectorSize) {
@@ -162,6 +168,7 @@ public class vector_quantization {
             }
         }
         img.toimage(dest);
+        System.out.println("Complete");
     }
 
     public int findcoodbookofID(int ID) {
@@ -181,7 +188,8 @@ public class vector_quantization {
         codex = new ArrayList<>();
         IDs = new ArrayList[bookSize];
         codex.add(averageVec);
-        while (codex.size() < bookSize) {
+        int limit = 0;
+        while (limit++ < vectors.size() && codex.size() < vectors.size() && codex.size() < bookSize) {
             int size = codex.size();
             for (int i = 0; i < size; i++) {
                 float[][] tmp = addToVector(codex.remove(0), 0);
@@ -203,15 +211,13 @@ public class vector_quantization {
             codex.size();
             for (int i = 0; i < codex.size(); i++) {
                 if (tmpIDs[i] == null) {
-//                    codex.remove(i--);
-//                    // TO DO remove from tmpIDs
-                    continue;
+                    codex.remove(i);
+                    for (int j = i; i < codexsize; i++) {
+                        tmpIDs[j] = tmpIDs[j + 1];
+                    }
+                    i--;
                 } else
                     codex.set(i, AvgbyID(tmpIDs[i]));
-            }
-            boolean same = false;
-            for (int i = 0; i < bookSize; i++) {
-
             }
             IDs = tmpIDs;
         }
@@ -227,9 +233,7 @@ public class vector_quantization {
                 tmpIDs[possion] = new ArrayList<Integer>();
             tmpIDs[possion].add(i);
         }
-        for (int i = 0; i < codex.size(); i++)
-            IDs = tmpIDs;
-//        vectors_to_images(codex, "codebook number ");
+        IDs = tmpIDs;
     }
 
     public int getindexofmin(ArrayList<Integer> a) {
