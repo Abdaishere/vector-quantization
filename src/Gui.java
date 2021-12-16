@@ -24,7 +24,6 @@ public class Gui extends JFrame implements ActionListener {
 
     JLabel size = new JLabel("CodeBook size");
     JLabel vectorDimensions = new JLabel("Vector Dimensions ");
-    JLabel block_height = new JLabel("block height");
     JTextField text1 = new JTextField("32");
     JTextField text2 = new JTextField("2");
     JTextField sourcetext = new JTextField(null);
@@ -35,6 +34,11 @@ public class Gui extends JFrame implements ActionListener {
     Border lineBorder = BorderFactory.createLineBorder(Color.gray);
 
     Gui() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         this.setVisible(true);
         this.setSize(1280, 720);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -103,9 +107,7 @@ public class Gui extends JFrame implements ActionListener {
         dimensions.add(text2);
 
 
-//		text3.setBounds(480,50,100,20) ; 
-//		this.add(text3) ;  
-    } //this
+    }
 
 
     @Override
@@ -115,27 +117,18 @@ public class Gui extends JFrame implements ActionListener {
             String dest = desttext.getText();
             if (source.equals("") || dest.equals("")) {
                 JOptionPane.showMessageDialog(this,
-                        "Please chose source and Destination.",
+                        "Please choose source and Destination.",
                         "Warning",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
             try {
                 new vector_quantization().decompress(source, dest);
-                ImageIcon icon = new ImageIcon(dest);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
-            try {
-                image = ImageIO.read(new File(dest));
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            Image image2 = image.getScaledInstance(rightImage.getWidth() - 1, rightImage.getHeight() - 1, Image.SCALE_SMOOTH);
-            ImageIcon format2 = new ImageIcon(image2);
-            the_compressed_image.setIcon(format2);
+            show(dest, rightImage, the_compressed_image);
 
         } else if (e.getSource() == sourcetext) {
             try {
@@ -147,7 +140,7 @@ public class Gui extends JFrame implements ActionListener {
                 Image image1 = image.getScaledInstance(leftImage.getWidth() - 1, leftImage.getHeight() - 1, Image.SCALE_SMOOTH);
                 ImageIcon format = new ImageIcon(image1);
                 the_selected_image.setIcon(format);
-            } catch (Exception r) {
+            } catch (Exception ignored) {
             }
         } else if (e.getSource() == destination) {
             String s;
@@ -168,15 +161,15 @@ public class Gui extends JFrame implements ActionListener {
                 sourcetext.setText(s);
             }
             try {
+                assert s != null;
                 image = ImageIO.read(new File(s));
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (IOException ignored) {
             }
             try {
                 Image image1 = image.getScaledInstance(leftImage.getWidth() - 1 - 1, leftImage.getHeight() - 1 - 1, Image.SCALE_SMOOTH);
                 ImageIcon format = new ImageIcon(image1);
                 the_selected_image.setIcon(format);
-            } catch (Exception r) {
+            } catch (Exception ignored) {
             }
         } else if (e.getSource() == compress) {
             String source = sourcetext.getText();
@@ -191,9 +184,9 @@ public class Gui extends JFrame implements ActionListener {
             try {
                 String str;
                 str = text1.getText();
-                numberOfBlocks = Integer.valueOf(str);
+                numberOfBlocks = Integer.parseInt(str);
                 str = text2.getText();
-                blockWidth = Integer.valueOf(str);
+                blockWidth = Integer.parseInt(str);
             } catch (Exception r) {
                 JOptionPane.showMessageDialog(this,
                         "Vector size and codebook size was set to default.",
@@ -201,11 +194,11 @@ public class Gui extends JFrame implements ActionListener {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            vector_quantization vecq;
+            vector_quantization Start;
             try {
-                vecq = new vector_quantization(blockWidth, numberOfBlocks);
-                vecq.compress(source, dest);
-                vecq.img.toimage("tmp.png");
+                Start = new vector_quantization(blockWidth, numberOfBlocks);
+                Start.compress(source, dest);
+                Start.img.toImage("tmp.png");
             } catch (Exception r) {
                 JOptionPane.showMessageDialog(this,
                         "Compression failed.",
@@ -214,17 +207,9 @@ public class Gui extends JFrame implements ActionListener {
                 return;
             }
             String s = "tmp.png";
-            try {
-                image = ImageIO.read(new File(s));
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            Image image1 = image.getScaledInstance(leftImage.getWidth() - 1, leftImage.getHeight() - 1, Image.SCALE_SMOOTH);
-            ImageIcon format = new ImageIcon(image1);
-            the_selected_image.setIcon(format);
+            show(s, leftImage, the_selected_image);
 
-            vecq.decompress(dest, "result.png");
-            ImageIcon icon = new ImageIcon("result.png");
+            Start.decompress(dest, "result.png");
 
             try {
                 image = ImageIO.read(new File("result.png"));
@@ -237,6 +222,17 @@ public class Gui extends JFrame implements ActionListener {
             the_compressed_image.setIcon(format2);
 
         }
+    }
+
+    private void show(String s, JPanel leftImage, JLabel the_selected_image) {
+        try {
+            image = ImageIO.read(new File(s));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        Image image1 = image.getScaledInstance(leftImage.getWidth() - 1, leftImage.getHeight() - 1, Image.SCALE_SMOOTH);
+        ImageIcon format = new ImageIcon(image1);
+        the_selected_image.setIcon(format);
     }
 }
 	

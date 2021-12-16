@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class fileProcessor {
-    public static String writeToFile(String data, String dir) {
+    public static void writeToFile(String data, String dir) {
         try {
             File f = new File(dir);
             f.getParentFile().mkdirs();
@@ -16,46 +16,43 @@ public class fileProcessor {
         } catch (IOException e) {
             System.out.println("Writing failed");
         }
-        return dir;
     }
 
     protected static String binaryStringToBits(String s, int extraLen) {
         //complete the string to multiple of 8
-        for (int i = 0; i < extraLen; i++)
-            s += '0';
-
+        s = s + "0".repeat(Math.max(0, extraLen));
         //Pack into bytes
         byte[] arr = new byte[s.length() / 8];
 
         for (int i = 0; i <= s.length() - 8; i += 8) {
             arr[i / 8] = (byte) Integer.parseInt(s.substring(i, i + 8), 2);
         }
-        String res = "";
-        for (int i = 0; i < arr.length; i++) {
-            int c = arr[i];
+        StringBuilder res = new StringBuilder();
+        for (int b : arr) {
+            int c = b;
             if (c < 0) c = c & 0xFF;
-            res += (char) c;
+            res.append((char) c);
         }
-        return res;
+        return res.toString();
     }
 
     protected static String bitsToBinaryString(String s, int extraLen) {
 
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            result += toBin(s.charAt(i), 8);
+            result.append(toBin(s.charAt(i), 8));
         }
-        result = result.substring(0, result.length() - extraLen);
-        return result;
+        result = new StringBuilder(result.substring(0, result.length() - extraLen));
+        return result.toString();
 
     }
 
     protected static String toBin(int x, int numOfBits) {
         if (x < 0) x *= -1;
-        String res = Integer.toBinaryString(x);
+        StringBuilder res = new StringBuilder(Integer.toBinaryString(x));
         while (res.length() < numOfBits)
-            res = "0" + res;
-        return res;
+            res.insert(0, "0");
+        return res.toString();
     }
 
     protected static int log2(int x) {
@@ -63,21 +60,21 @@ public class fileProcessor {
     }
 
     public static String fileToString(String dir) {
-        String res = "";
+        StringBuilder res = new StringBuilder();
         try {
             File ogFile = new File(dir);
             Scanner reader = new Scanner(ogFile);
             String tmp;
             while (reader.hasNext()) {
                 tmp = reader.nextLine();
-                res += '\n';
-                res += tmp;
+                res.append('\n');
+                res.append(tmp);
             }
-            res = res.substring(1); //remove the first \n
+            res = new StringBuilder(res.substring(1)); //remove the first \n
         } catch (IOException e) {
             System.out.println("File Doesn't exist !");
             System.exit(1);
         }
-        return res;
+        return res.toString();
     }
 }

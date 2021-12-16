@@ -1,7 +1,6 @@
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 
@@ -38,18 +37,18 @@ public class image {
 
     @Override
     public String toString() {
-        String tmp = "";
+        StringBuilder tmp = new StringBuilder();
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                tmp += pixels[i][j] + " ";
+                tmp.append(pixels[i][j]).append(" ");
             }
-            tmp += '\n';
+            tmp.append('\n');
         }
-        return tmp;
+        return tmp.toString();
     }
 
 
-    public void toimage(String s) {
+    public void toImage(String s) {
         BufferedImage img = new BufferedImage(
                 pixels.length, pixels[0].length, BufferedImage.TYPE_BYTE_GRAY);
         for (int x = 0; x < pixels.length; x++) {

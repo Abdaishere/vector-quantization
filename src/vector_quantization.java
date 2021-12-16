@@ -7,7 +7,7 @@ public class vector_quantization {
     int bookSize;
     image img;
     ArrayList<float[][]> codex;
-    ArrayList<Integer>[] IDs;
+    ArrayList[] IDs;
     int codexsize;
     ArrayList<Integer> parent;
     static int i;
@@ -33,7 +33,7 @@ public class vector_quantization {
                     for (int l = j; l < j + vectorSize; l++) {
                         try {
                             tmp[Row][col++] = img.pixels[k][l];
-                        } catch (Exception e) {
+                        } catch (Exception ignored) {
                         }
                     }
                     Row++;
@@ -52,23 +52,23 @@ public class vector_quantization {
         i = 0;
         for (float[][] vec : vector) {
             tmp.pixels = vec;
-            tmp.toimage(".\\test\\" + str + "_%s.png".formatted(i++));
+            tmp.toImage(".\\test\\" + str + "_%s.png".formatted(i++));
         }
     }
 
-    public void vector_replace(float[][] vec, image img, int i) {
+    public void vector_replace(float[][] vec, int i) {
         vectors.set(i, vec);
     }
 
     public void encode(String dest) {
-        String data = "";
+        StringBuilder data = new StringBuilder();
         String[] lables = new String[codex.size()];
         for (int i = 0; i < codex.size(); i++) {
             lables[i] = fileProcessor.toBin(i, fileProcessor.log2(codex.size()));
         }
 
         for (int i = 0; i < vectors.size(); i++) {
-            data += lables[findcoodbookofID(i)];
+            data.append(lables[findcoodbookofID(i)]);
         }
 
         String header = "";
@@ -76,23 +76,23 @@ public class vector_quantization {
         header += fileProcessor.toBin(img.h, 16);
         header += fileProcessor.toBin(codex.size(), 16);
         header += fileProcessor.toBin(vectorSize, 16);
-        String coodbook = "";
+        StringBuilder coodbook = new StringBuilder();
         for (float[][] code : codex) {
             for (int i = 0; i < vectorSize; i++) {
                 for (int j = 0; j < vectorSize; j++) {
-                    coodbook += fileProcessor.toBin((int) code[i][j], 8);
+                    coodbook.append(fileProcessor.toBin((int) code[i][j], 8));
                 }
             }
         }
 
-        data = header + coodbook + data;
+        data.insert(0, header + coodbook);
         int extraLen = 8 - (data.length() % 8);
         if (extraLen == 8)
             extraLen = 0;
 
-        data = fileProcessor.binaryStringToBits(data, extraLen);
-        data = String.valueOf((byte) extraLen) + data;
-        fileProcessor.writeToFile(data, dest);
+        data = new StringBuilder(fileProcessor.binaryStringToBits(data.toString(), extraLen));
+        data.insert(0, String.valueOf((byte) extraLen));
+        fileProcessor.writeToFile(data.toString(), dest);
     }
 
     private void decode(String source) {
@@ -159,7 +159,7 @@ public class vector_quantization {
                     for (int l = j; l < j + vectorSize; l++) {
                         try {
                             img.pixels[k][l] = tmp[Row][col++];
-                        } catch (Exception e) {
+                        } catch (Exception ignored) {
                         }
                     }
                     Row++;
@@ -167,7 +167,7 @@ public class vector_quantization {
                 w++;
             }
         }
-        img.toimage(dest);
+        img.toImage(dest);
         System.out.println("Complete");
     }
 
@@ -182,7 +182,7 @@ public class vector_quantization {
 
     public void splitting() {
         //Get average vector
-        float[][] averageVec = new float[vectorSize][vectorSize];           //Average
+        float[][] averageVec;           //Average
         averageVec = getAverageOfVectors(vectors);
 
         codex = new ArrayList<>();
@@ -197,7 +197,7 @@ public class vector_quantization {
                 codex.add(addToVector(tmp, 1));
             }
             size = vectors.size();
-            ArrayList<Integer>[] tmpIDs = new ArrayList[codex.size()];
+            ArrayList[] tmpIDs = new ArrayList[codex.size()];
             for (int i = 0; i < size; i++) {
                 ArrayList<Integer> MESs = new ArrayList<>();
                 for (float[][] code : codex) {
@@ -205,10 +205,9 @@ public class vector_quantization {
                 }
                 int possion = getindexofmin(MESs);
                 if (tmpIDs[possion] == null)
-                    tmpIDs[possion] = new ArrayList<Integer>();
+                    tmpIDs[possion] = new ArrayList<>();
                 tmpIDs[possion].add(i);
             }
-            codex.size();
             for (int i = 0; i < codex.size(); i++) {
                 if (tmpIDs[i] == null) {
                     codex.remove(i);
@@ -222,7 +221,7 @@ public class vector_quantization {
             IDs = tmpIDs;
         }
         int size = vectors.size();
-        ArrayList<Integer>[] tmpIDs = new ArrayList[codex.size()];
+        ArrayList[] tmpIDs = new ArrayList[codex.size()];
         for (int i = 0; i < size; i++) {
             ArrayList<Integer> MESs = new ArrayList<>();
             for (float[][] code : codex) {
@@ -230,7 +229,7 @@ public class vector_quantization {
             }
             int possion = getindexofmin(MESs);
             if (tmpIDs[possion] == null)
-                tmpIDs[possion] = new ArrayList<Integer>();
+                tmpIDs[possion] = new ArrayList<>();
             tmpIDs[possion].add(i);
         }
         IDs = tmpIDs;
@@ -296,10 +295,7 @@ public class vector_quantization {
                 int tmp = (int) Math.floor(vec[i][j] + val);
                 if (tmp < 0)
                     temp[i][j] = 0;
-                else if (tmp > 255)
-                    temp[i][j] = 255;
-                else
-                    temp[i][j] = tmp;
+                else temp[i][j] = Math.min(tmp, 255);
             }
         }
         return temp;
