@@ -38,7 +38,7 @@ public class image {
 
     @Override
     public String toString() {
-        String tmp = new String();
+        String tmp = "";
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 tmp += pixels[i][j] + " ";

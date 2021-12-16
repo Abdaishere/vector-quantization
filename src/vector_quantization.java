@@ -61,7 +61,7 @@ public class vector_quantization {
     }
 
     public void encode(String dest) {
-        String data = new String();
+        String data = "";
         String[] lables = new String[codex.size()];
         for (int i = 0; i < codex.size(); i++) {
             lables[i] = fileProcessor.toBin(i, fileProcessor.log2(codex.size()));
@@ -71,12 +71,12 @@ public class vector_quantization {
             data += lables[findcoodbookofID(i)];
         }
 
-        String header = new String();
+        String header = "";
         header += fileProcessor.toBin(img.w, 16);
         header += fileProcessor.toBin(img.h, 16);
         header += fileProcessor.toBin(codex.size(), 16);
         header += fileProcessor.toBin(vectorSize, 16);
-        String coodbook = new String();
+        String coodbook = "";
         for (float[][] code : codex) {
             for (int i = 0; i < vectorSize; i++) {
                 for (int j = 0; j < vectorSize; j++) {
